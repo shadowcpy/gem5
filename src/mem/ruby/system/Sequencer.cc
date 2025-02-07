@@ -577,7 +577,8 @@ Sequencer::processReadCallback(SequencerRequest &seq_req,
     if (ruby_request) {
         assert((seq_req.m_type == RubyRequestType_LD) ||
                (seq_req.m_type == RubyRequestType_Load_Linked) ||
-               (seq_req.m_type == RubyRequestType_IFETCH));
+               (seq_req.m_type == RubyRequestType_IFETCH) ||
+               (seq_req.m_type == RubyRequestType_Acquire));
     }
     if ((seq_req.m_type != RubyRequestType_LD) &&
         (seq_req.m_type != RubyRequestType_Load_Linked) &&
@@ -1023,7 +1024,14 @@ Sequencer::makeRequest(PacketPtr pkt)
             //
             // Note: M5 packets do not differentiate ST from RMW_Write
             //
-            primary_type = secondary_type = RubyRequestType_ST;
+
+            if (pkt->req->isRelease()) {
+                DPRINTF(RubySequencer, "Issuing Release\n");
+                primary_type = secondary_type = RubyRequestType_Release;
+            } else {
+                primary_type = secondary_type = RubyRequestType_ST;
+            }
+
         } else if (pkt->isRead()) {
             // hardware transactional memory commands
             if (pkt->req->isHTMCmd()) {
@@ -1034,6 +1042,9 @@ Sequencer::makeRequest(PacketPtr pkt)
                 if (pkt->req->isReadModifyWrite()) {
                     primary_type = RubyRequestType_RMW_Read;
                     secondary_type = RubyRequestType_ST;
+                } else if (pkt->req->isAcquire()) {
+                    DPRINTF(RubySequencer, "Issuing Acquire\n");
+                    primary_type = secondary_type = RubyRequestType_Acquire;
                 } else {
                     primary_type = secondary_type = RubyRequestType_LD;
                 }
@@ -1060,6 +1071,10 @@ Sequencer::makeRequest(PacketPtr pkt)
         // proceed until the cache line is unlocked by a Locked_RMW_Write
         return RequestStatus_Aliased;
     }
+
+    DPRINTF(RubySequencer, "FINAL Request %s %s\n",
+            primary_type, secondary_type);
+
 
     RequestStatus status = insertRequest(pkt, primary_type, secondary_type);
 

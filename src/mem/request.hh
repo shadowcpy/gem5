@@ -1085,7 +1085,7 @@ class Request : public Extensible<Request>
     bool isToPOC() const { return _flags.isSet(DST_POC); }
     Flags getDest() const { return _flags & DST_BITS; }
 
-    bool isAcquire() const { return _cacheCoherenceFlags.isSet(ACQUIRE); }
+    bool isAcquire() const { return _flags.isSet(ACQUIRE); }
 
 
     /**
