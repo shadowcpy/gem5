@@ -374,7 +374,7 @@ class BAC
     bool wroteToTimeBuffer;
 
     /** Tracks remaining cycles that the branch predictor stalls BAC */
-    Cycles branchPredictRemaining;
+    Cycles branchPredictRemaining[MaxThreads];
 
     /** Source of possible stalls. */
     struct Stalls

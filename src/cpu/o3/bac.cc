@@ -67,7 +67,6 @@ BAC::BAC(CPU *_cpu, const BaseO3CPUParams &params)
       bpu(params.branchPred),
       ftq(nullptr),
       wroteToTimeBuffer(false),
-      branchPredictRemaining(0),
       decoupledFrontEnd(params.decoupledFrontEnd),
       fetchToBacDelay(params.fetchToBacDelay),
       decodeToFetchDelay(params.decodeToFetchDelay),
@@ -85,6 +84,7 @@ BAC::BAC(CPU *_cpu, const BaseO3CPUParams &params)
     for (int i = 0; i < MaxThreads; i++) {
         bacPC[i].reset(params.isa[0]->newPCState());
         stalls[i] = {false, false, false};
+        branchPredictRemaining[i] = Cycles(0);
     }
 
     assert(bpu!=nullptr);
@@ -409,8 +409,8 @@ BAC::checkSignalsAndUpdate(ThreadID tid)
         return false;
     }
 
-    if (branchPredictRemaining > Cycles(0)) {
-        --branchPredictRemaining;
+    if (branchPredictRemaining[tid] > Cycles(0)) {
+        --branchPredictRemaining[tid];
         DPRINTF(BAC,
             "[global] Stalling for Branch Predictor for %i more cycles.\n",
             branchPredictRemaining
@@ -691,7 +691,7 @@ BAC::generateFetchTargets(ThreadID tid, bool &status_change)
         // Now make the actual prediction. Note the BPU will advance
         // the PC to the next instruction.
         predict_taken = predict(tid, staticInst, curFT, *next_pc);
-        branchPredictRemaining = Cycles(bacBranchPredictDelay);
+        branchPredictRemaining[tid] = Cycles(bacBranchPredictDelay);
 
         DPRINTF(BAC, "[tid:%i, ftn:%llu] Branch found at PC %#x "
                 "taken?:%i, target:%#x\n",
