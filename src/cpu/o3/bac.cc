@@ -67,11 +67,13 @@ BAC::BAC(CPU *_cpu, const BaseO3CPUParams &params)
       bpu(params.branchPred),
       ftq(nullptr),
       wroteToTimeBuffer(false),
+      branchPredictRemaining(0),
       decoupledFrontEnd(params.decoupledFrontEnd),
       fetchToBacDelay(params.fetchToBacDelay),
       decodeToFetchDelay(params.decodeToFetchDelay),
       commitToFetchDelay(params.commitToFetchDelay),
       bacToFetchDelay(params.bacToFetchDelay),
+      bacBranchPredictDelay(params.bacBranchPredictDelay),
       fetchTargetWidth(params.fetchTargetWidth),
       minInstSize(params.minInstSize),
       numThreads(params.numThreads),
@@ -407,6 +409,16 @@ BAC::checkSignalsAndUpdate(ThreadID tid)
         return false;
     }
 
+    if (branchPredictRemaining > Cycles(0)) {
+        --branchPredictRemaining;
+        DPRINTF(BAC,
+            "[global] Stalling for Branch Predictor for %i more cycles.\n",
+            branchPredictRemaining
+        );
+        bacStatus[tid] = Blocked;
+        return false;
+    }
+
     // If at this point the FTQ is still invalid we need to wait for
     // A resteer/squash signal.
     if (!ftq->isValid(tid) && bacStatus[tid] != Idle) {
@@ -679,6 +691,7 @@ BAC::generateFetchTargets(ThreadID tid, bool &status_change)
         // Now make the actual prediction. Note the BPU will advance
         // the PC to the next instruction.
         predict_taken = predict(tid, staticInst, curFT, *next_pc);
+        branchPredictRemaining = Cycles(bacBranchPredictDelay);
 
         DPRINTF(BAC, "[tid:%i, ftn:%llu] Branch found at PC %#x "
                 "taken?:%i, target:%#x\n",
