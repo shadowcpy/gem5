@@ -104,7 +104,7 @@ class BaseO3CPU(BaseCPU):
 
     # Forward pipeline delays
     bacToFetchDelay = Param.Cycles(1, "Branch address calc. to fetch delay")
-    bacBranchPredictDelay = Param.Cycles(5, "BAC Branch Predictor delay")
+    bacBranchPredictDelay = Param.Cycles(1, "BAC Branch Predictor delay")
     fetchToDecodeDelay = Param.Cycles(1, "Fetch to decode delay")
     decodeWidth = Param.Unsigned(8, "Decode width")
 

@@ -65,6 +65,7 @@ from m5.objects import (
     TaggedPrefetcher,
     FetchDirectedPrefetcher,
     L2XBar,
+    LocalBP,
 )
 
 from gem5.isas import ISA
@@ -152,6 +153,12 @@ class BPLTage(LTAGE):
     requiresBTBHit = True
 
 
+class BPLocal(LocalBP):
+    instShiftAmt = 0
+    BTB = BTB()
+    requiresBTBHit = True
+
+
 # We need a custom cache hierarchy to incorporate the FDP prefetcher.
 class CacheHierarchy(PrivateL1CacheHierarchy):
     def __init__(self, icache, dcache):
@@ -211,6 +218,9 @@ cpu = processor.cores[0].core
 # the fetch buffer to be able to run ahead of fetch
 cpu.fetchBufferSize = 16
 cpu.fetchTargetWidth = 32
+
+# Branch Predictor Delay
+cpu.bacBranchPredictDelay = 2
 
 # The decoupled front-end leverages the BTB to find branches in the fetch
 # stream. Starting from the end of the last fetch target it will search

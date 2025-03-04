@@ -73,6 +73,9 @@ class LocalBP : public BPredUnit
     // Overriding interface functions
     bool lookup(ThreadID tid, Addr pc, void * &bpHistory) override;
 
+    void branchPlaceholder(ThreadID tid, Addr pc, bool uncond,
+                           void * &bpHistory) override;
+
     void updateHistories(ThreadID tid, Addr pc, bool uncond, bool taken,
                          Addr target,  void * &bpHistory) override;
 

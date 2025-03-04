@@ -78,6 +78,12 @@ LocalBP::LocalBP(const LocalBPParams &params)
             instShiftAmt);
 }
 
+void LocalBP::branchPlaceholder(ThreadID tid, Addr pc,
+                                bool uncond, void * &bpHistory)
+{
+// Placeholder for a function that only returns history items
+}
+
 void
 LocalBP::updateHistories(ThreadID tid, Addr pc, bool uncond,
                          bool taken, Addr target, void * &bpHistory)
